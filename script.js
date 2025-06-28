@@ -1,39 +1,30 @@
-const scriptURL = 'https://script.google.com/macros/s/AKfycbwstHxViQiFYwQlc9ICcn258vhUcvbYSwIrCSoiSZrB_ReBGkvcKTOpC9KyB1gXghlrbA/exec';
-
+// Function to handle item addition and posting to Google Sheets
 function addItem() {
-  const input = document.getElementById("itemInput");
-  const value = input.value.trim();
-  if (value === "") return;
+  const itemToAdd = document.getElementById('itemInput').value;  // Get the item from the input field
+  if (!itemToAdd) {
+    alert("Please enter an item.");
+    return;
+  }
 
-  const ul = document.getElementById("list");
-
-  const li = document.createElement("li");
-  li.innerHTML = `${value} <button onclick="removeItem(this)">X</button>`;
-  ul.appendChild(li);
-
-  // Send the new item to your Google Sheet
-  fetch(scriptURL, {
+  // POST request to the Google Apps Script Web App
+  fetch('https://script.google.com/macros/s/AKfycbwstHxViQiFYwQlc9ICcn258vhUcvbYSwIrCSoiSZrB_ReBGkvcKTOpC9KyB1gXghlrbA/exec', {
     method: 'POST',
-    body: JSON.stringify({ item: value }),
     headers: {
-      'Content-Type': 'application/json'
-    }
+      'Content-Type': 'application/json',  // Set the content type to JSON
+    },
+    body: JSON.stringify({ item: itemToAdd })  // Send the item in JSON format
   })
-  .then(response => {
-    if (response.ok) {
-      console.log("Item successfully sent to Google Sheet");
+  .then(response => response.json())  // Parse the JSON response
+  .then(data => {
+    if (data.status === "success") {
+      alert("Item added successfully!");
+      document.getElementById('itemInput').value = '';  // Clear the input field after success
     } else {
-      console.error("Failed to send item to Google Sheet");
+      alert("Something went wrong. Please try again.");
     }
   })
   .catch(error => {
     console.error("Error sending to Google Sheet:", error);
+    alert("Error sending to Google Sheet.");
   });
-
-  // Clear input
-  input.value = "";
-}
-
-function removeItem(button) {
-  button.parentElement.remove();
 }
