@@ -1,56 +1,53 @@
-// /docs/script.js
-const API = 'https://script.google.com/macros/s/AKfycbwstHxViQiFYwQlc9ICcn258vhUcvbYSwIrCSoiSZrB_ReBGkvcKTOpC9KyB1gXghlrbA/exec'; // ← your exec URL
+// script.js
+const API = 'https://script.google.com/macros/s/AKfycbz1pfGfJH3Lmxmxojbg3_XTY6BWpj04LUD8MnNiiuSeHF9usLwXKn0Krp-WK6uvPrJ8Sg/exec'; // ← replace with your Web-App exec URL
 
-// inject a JSONP <script> and cleanup old ones
-function jsonp(url) {
+// Create & append a JSONP <script>, then auto-remove it
+function jsonp(src) {
   const s = document.createElement('script');
-  s.src = url;
+  s.src = src;
+  s.async = true;
   document.head.appendChild(s);
-  // remove after load to avoid memory leaks
   s.onload = () => document.head.removeChild(s);
 }
 
-// render callback for listing items
+// Renders the list into the <ul>
 function listCallback(data) {
   const ul = document.getElementById('list');
   ul.innerHTML = '';
   (data.items || []).forEach(({id, item}) => {
     const li = document.createElement('li');
     li.textContent = item;
-    const del = document.createElement('button');
-    del.textContent = 'Delete';
-    del.onclick = () => deleteItem(id);
-    li.appendChild(del);
+    const btn = document.createElement('button');
+    btn.textContent = 'Delete';
+    btn.onclick = () => deleteItem(id);
+    li.appendChild(btn);
     ul.appendChild(li);
   });
 }
 
-// after add/delete, re-fetch list
-function addCallback(_){ fetchList(); }
-function deleteCallback(_){ fetchList(); }
+// After mutations, reload
+function addCallback()    { fetchList(); }
+function deleteCallback() { fetchList(); }
 
-// fetch current list
+// Fetch & render
 function fetchList() {
-  const url = `${API}?action=list&callback=listCallback`;
-  jsonp(url);
+  jsonp(`${API}?action=list&callback=listCallback`);
 }
 
-// add a new item
+// Add new
 function addItem() {
-  const input = document.getElementById('itemInput');
-  const val = input.value.trim();
-  if (!val) return;
-  const url = `${API}?action=add&item=${encodeURIComponent(val)}&callback=addCallback`;
-  jsonp(url);
-  input.value = '';
+  const inpt = document.getElementById('itemInput');
+  const v    = inpt.value.trim();
+  if (!v) return;
+  jsonp(`${API}?action=add&item=${encodeURIComponent(v)}&callback=addCallback`);
+  inpt.value = '';
 }
 
-// delete by row ID
+// Delete by row-ID
 function deleteItem(id) {
-  const url = `${API}?action=delete&id=${id}&callback=deleteCallback`;
-  jsonp(url);
+  jsonp(`${API}?action=delete&id=${id}&callback=deleteCallback`);
 }
 
-// wire up
-document.getElementById('addBtn').addEventListener('click', addItem);
+// Hook up events
+document.getElementById('addBtn').onclick = addItem;
 window.addEventListener('DOMContentLoaded', fetchList);
