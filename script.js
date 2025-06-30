@@ -1,30 +1,37 @@
-// Function to handle item addition and posting to Google Sheets
-function addItem() {
-  const itemToAdd = document.getElementById('itemInput').value;  // Get the item from the input field
-  if (!itemToAdd) {
-    alert("Please enter an item.");
-    return;
-  }
+const API = 'https://script.google.com/macros/s/AKfycbwstHxViQiFYwQlc9ICcn258vhUcvbYSwIrCSoiSZrB_ReBGkvcKTOpC9KyB1gXghlrbA/exec'; // ← replace with your Apps Script URL
 
-  // POST request to the Google Apps Script Web App
-  fetch('https://script.google.com/macros/s/AKfycbwstHxViQiFYwQlc9ICcn258vhUcvbYSwIrCSoiSZrB_ReBGkvcKTOpC9KyB1gXghlrbA/exec', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',  // Set the content type to JSON
-    },
-    body: JSON.stringify({ item: itemToAdd })  // Send the item in JSON format
-  })
-  .then(response => response.json())  // Parse the JSON response
-  .then(data => {
-    if (data.status === "success") {
-      alert("Item added successfully!");
-      document.getElementById('itemInput').value = '';  // Clear the input field after success
-    } else {
-      alert("Something went wrong. Please try again.");
-    }
-  })
-  .catch(error => {
-    console.error("Error sending to Google Sheet:", error);
-    alert("Error sending to Google Sheet.");
+// Fetch & render the current list
+async function fetchList() {
+  const res = await fetch(`${API}?action=list`);
+  const { items } = await res.json();
+  const ul = document.getElementById('list');
+  ul.innerHTML = '';
+  items.forEach(({id,item}) => {
+    const li = document.createElement('li');
+    li.textContent = item;
+    const del = document.createElement('button');
+    del.textContent = 'Delete';
+    del.onclick = () => deleteItem(id);
+    li.appendChild(del);
+    ul.appendChild(li);
   });
 }
+
+// Add a new item
+async function addItem() {
+  const input = document.getElementById('itemInput');
+  const val = input.value.trim();
+  if (!val) return;
+  await fetch(`${API}?action=add&item=${encodeURIComponent(val)}`);
+  input.value = '';
+  fetchList();
+}
+
+// Delete by row-ID
+async function deleteItem(id) {
+  await fetch(`${API}?action=delete&id=${id}`);
+  fetchList();
+}
+
+document.getElementById('addBtn').addEventListener('click', addItem);
+window.addEventListener('DOMContentLoaded', fetchList);
