@@ -1,7 +1,7 @@
-// script.js
-const API = 'https://script.google.com/macros/s/AKfycbz1pfGfJH3Lmxmxojbg3_XTY6BWpj04LUD8MnNiiuSeHF9usLwXKn0Krp-WK6uvPrJ8Sg/exec'; // ← replace with your Web-App exec URL
+// /docs/script.js
+const API = 'https://script.google.com/macros/s/AKfycbz1pfGfJH3Lmxmxojbg3_XTY6BWpj04LUD8MnNiiuSeHF9usLwXKn0Krp-WK6uvPrJ8Sg/exec';
 
-// Create & append a JSONP <script>, then auto-remove it
+// Inject & auto-remove a JSONP <script>
 function jsonp(src) {
   const s = document.createElement('script');
   s.src = src;
@@ -10,7 +10,7 @@ function jsonp(src) {
   s.onload = () => document.head.removeChild(s);
 }
 
-// Renders the list into the <ul>
+// Render list
 function listCallback(data) {
   const ul = document.getElementById('list');
   ul.innerHTML = '';
@@ -25,29 +25,29 @@ function listCallback(data) {
   });
 }
 
-// After mutations, reload
+// Refresh after mutations
 function addCallback()    { fetchList(); }
 function deleteCallback() { fetchList(); }
 
-// Fetch & render
+// Fetch current items
 function fetchList() {
   jsonp(`${API}?action=list&callback=listCallback`);
 }
 
-// Add new
+// Add an item
 function addItem() {
-  const inpt = document.getElementById('itemInput');
-  const v    = inpt.value.trim();
+  const input = document.getElementById('itemInput');
+  const v = input.value.trim();
   if (!v) return;
   jsonp(`${API}?action=add&item=${encodeURIComponent(v)}&callback=addCallback`);
-  inpt.value = '';
+  input.value = '';
 }
 
-// Delete by row-ID
+// Delete an item by row ID
 function deleteItem(id) {
   jsonp(`${API}?action=delete&id=${id}&callback=deleteCallback`);
 }
 
-// Hook up events
-document.getElementById('addBtn').onclick = addItem;
+// Wire up events
+document.getElementById('addBtn').addEventListener('click', addItem);
 window.addEventListener('DOMContentLoaded', fetchList);
