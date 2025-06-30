@@ -1,20 +1,119 @@
+<!-- /docs/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Family Shopping List</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body { font-family: sans-serif; max-width: 400px; margin: 2em auto; }
-    ul { padding-left: 1.2em; }
-    li { margin: .5em 0; }
-    button { margin-left: .5em; }
+    :root {
+      --bg: #f9f9f9;
+      --card: #ffffff;
+      --text: #333333;
+      --accent: #0077cc;
+      --accent-hover: #005fa3;
+      --border: #e0e0e0;
+      --radius: 0.5rem;
+      --spacing: 1rem;
+      --font: 'Inter', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: var(--spacing);
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+    .container {
+      background: var(--card);
+      width: 100%;
+      max-width: 480px;
+      padding: var(--spacing);
+      border-radius: var(--radius);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      margin: 0 0 var(--spacing);
+      font-size: 1.5rem;
+      font-weight: 600;
+      text-align: center;
+    }
+    .form {
+      display: flex;
+      gap: var(--spacing);
+      margin-bottom: var(--spacing);
+    }
+    .form input {
+      flex: 1;
+      padding: 0.5rem;
+      font-size: 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .form button {
+      background: var(--accent);
+      border: none;
+      color: white;
+      padding: 0 1rem;
+      font-size: 1rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .form button:hover {
+      background: var(--accent-hover);
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    li {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 0.75rem;
+      border-radius: var(--radius);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    li:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+    li button {
+      background: transparent;
+      border: none;
+      color: var(--accent);
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    li button:hover {
+      color: var(--accent-hover);
+    }
   </style>
 </head>
 <body>
-  <h1>Shopping List</h1>
-  <input id="itemInput" placeholder="e.g. Tomatoes">
-  <button id="addBtn">Add</button>
-  <ul id="list"></ul>
+  <div class="container">
+    <h1>Shopping List</h1>
+    <div class="form">
+      <input id="itemInput" type="text" placeholder="e.g. Tomatoes">
+      <button id="addBtn">Add</button>
+    </div>
+    <ul id="list"></ul>
+  </div>
 
   <script src="script.js"></script>
 </body>
