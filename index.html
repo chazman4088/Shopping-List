@@ -2,169 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Top Secret Access</title>
-  <link href="https://fonts.googleapis.com/css?family=Orbitron:400,700&display=swap" rel="stylesheet">
-
+  <title>Family Shopping List</title>
   <style>
-    /* Base reset */
-    * { margin:0; padding:0; box-sizing:border-box; }
-
-    body {
-      height:100vh;
-      background: #000 url('https://images.unsplash.com/photo-1593642532400-2682810df593?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80')
-                  center/cover no-repeat;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-family: 'Orbitron', sans-serif;
-      color:#0f0;
-      overflow:hidden;
-    }
-
-    /* Subtle scanline overlay */
-    body::before {
-      content:'';
-      position:absolute;
-      top:0; left:0;
-      width:100%; height:100%;
-      background: repeating-linear-gradient(
-        to bottom,
-        rgba(0,0,0,0) 0px,
-        rgba(0,0,0,0.05) 1px,
-        rgba(0,0,0,0) 2px
-      );
-      pointer-events:none;
-    }
-
-    .login-box {
-      position:relative;
-      padding:2rem 3rem;
-      background: rgba(0,0,0,0.8);
-      border: 2px solid #0f0;
-      border-radius:8px;
-      text-align:center;
-      z-index:1;
-      min-width:300px;
-      box-shadow: 0 0 20px #0f0;
-    }
-
-    .login-box h1 {
-      margin-bottom:1.5rem;
-      font-size:1.8rem;
-      letter-spacing:2px;
-      text-transform:uppercase;
-    }
-
-    .input-group {
-      margin-bottom:1.2rem;
-      text-align:left;
-    }
-
-    .input-group label {
-      display:block;
-      font-size:0.9rem;
-      margin-bottom:0.3rem;
-      letter-spacing:1px;
-    }
-
-    .input-group input {
-      width:100%;
-      padding:0.6rem;
-      background:transparent;
-      border:1px solid #0f0;
-      color:#0f0;
-      font-size:1rem;
-      border-radius:4px;
-      outline:none;
-      font-family:inherit;
-    }
-
-    .input-group input::placeholder {
-      color:rgba(0,255,0,0.5);
-    }
-
-    button {
-      width:100%;
-      padding:0.8rem;
-      background:#0f0;
-      border:none;
-      border-radius:4px;
-      font-size:1rem;
-      font-weight:bold;
-      letter-spacing:1px;
-      cursor:pointer;
-      transition: background 0.2s;
-      margin-top:0.5rem;
-    }
-
-    button:hover {
-      background: #a0a;
-      color:#fff;
-      box-shadow: 0 0 10px #f0f;
-    }
-
-    /* Glitch flicker */
-    @keyframes flicker {
-      0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-        opacity:1;
-      }
-      20%, 24%, 55% {
-        opacity:0.4;
-      }
-    }
-
-    .login-box {
-      animation: flicker 3s infinite;
-    }
+    body { font-family: sans-serif; max-width: 400px; margin: 2em auto; }
+    ul { padding-left:1.2em; }
+    li { margin: .5em 0; }
+    button { margin-left:.5em; }
   </style>
 </head>
-
 <body>
-  <div class="login-box">
-    <h1>TOP SECRET</h1>
-    <form id="spy-login">
-      <div class="input-group">
-        <label for="codename">Codename</label>
-        <input
-          type="text"
-          id="codename"
-          name="codename"
-          placeholder="Enter your codename"
-          required
-        />
-      </div>
-      <div class="input-group">
-        <label for="password">Password</label>
-        <input
-          type="password"
-          id="password"
-          name="password"
-          placeholder="********"
-          required
-        />
-      </div>
-      <button type="submit">Decrypt</button>
-    </form>
-  </div>
+  <h1>Shopping List</h1>
+  <input id="itemInput" placeholder="e.g. Tomatoes">
+  <button id="addBtn">Add</button>
+  <ul id="list"></ul>
 
-  <script>
-    // Dummy login handler
-    document.getElementById('spy-login').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const code = document.getElementById('codename').value.trim();
-      const pass = document.getElementById('password').value;
-      if(!code || !pass) {
-        alert('Mission aborted: missing credentials.');
-        return;
-      }
-      // Placeholder check (you’ll replace this with real backend auth)
-      if(pass === '007') {
-        alert(`Access Granted. Welcome, Agent ${code}.`);
-      } else {
-        alert('Access Denied. Try again.');
-      }
-    });
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
