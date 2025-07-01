@@ -28,6 +28,7 @@ function listCallback(data) {
 // Refresh after mutations
 function addCallback()    { fetchList(); }
 function deleteCallback() { fetchList(); }
+function clearCallback()  { fetchList(); }
 
 // Fetch current items
 function fetchList() {
@@ -48,6 +49,13 @@ function deleteItem(id) {
   jsonp(`${API}?action=delete&id=${id}&callback=deleteCallback`);
 }
 
+// Clear all items
+function clearAll() {
+  if (!confirm('Really clear all items?')) return;
+  jsonp(`${API}?action=clear&callback=clearCallback`);
+}
+
 // Wire up events
 document.getElementById('addBtn').addEventListener('click', addItem);
+document.getElementById('clearBtn').addEventListener('click', clearAll);
 window.addEventListener('DOMContentLoaded', fetchList);
