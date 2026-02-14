@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Family Planner</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React and Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-in { animation: fadeIn 0.4s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-slate-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+        
+        // --- Firebase Core Modules ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, doc, addDoc, onSnapshot, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // Global environment variables provided by the container
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'family-planner-gh';
+
+        // Helper for Lucide Icons in React
+        const Icon = ({ name, size = 24, className = "" }) => {
+            useEffect(() => { lucide.createIcons(); }, [name]);
+            return <i data-lucide={name} className={className} style={{ width: size, height: size }}></i>;
+        };
+
+        const App = () => {
+            const [user, setUser] = useState(null);
+            const [activeTab, setActiveTab] = useState('home');
+            const [shoppingItems, setShoppingItems] = useState([]);
+            const [newItemName, setNewItemName] = useState('');
+            const [movies, setMovies] = useState([]);
+            const [newMovieTitle, setNewMovieTitle] = useState('');
+            const [error, setError] = useState(null);
+
+            useEffect(() => {
+                const initAuth = async () => {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                };
+                initAuth();
+                return onAuthStateChanged(auth, setUser);
+            }, []);
+
+            useEffect(() => {
+                if (!user) return;
+                const unsubShopping = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'shoppingList'), (snap) => {
+                    setShoppingItems(snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => b.createdAt - a.createdAt));
+                });
+                const unsubMovies = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'movies'), (snap) => {
+                    setMovies(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                });
+                return () => { unsubShopping(); unsubMovies(); };
+            }, [user]);
+
+            // RANKED MOVIES: Highest likes to lowest
+            const rankedMovies = useMemo(() => {
+                return [...movies].sort((a, b) => (b.likes?.length || 0) - (a.likes?.length || 0));
+            }, [movies]);
+
+            const addItem = async (e) => {
+                e.preventDefault();
+                if (!newItemName.trim()) return;
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'shoppingList'), {
+                    name: newItemName.trim(), completed: false, createdAt: Date.now()
+                });
+                setNewItemName('');
+            };
+
+            const suggestMovie = async (e) => {
+                e.preventDefault();
+                if (!newMovieTitle.trim()) return;
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'movies'), {
+                    title: newMovieTitle.trim(), createdAt: Date.now(), likes: [], dislikes: []
+                });
+                setNewMovieTitle('');
+            };
+
+            const handleVote = async (movieId, type) => {
+                const movie = movies.find(m => m.id === movieId);
+                const likes = (movie.likes || []).filter(id => id !== user.uid);
+                const dislikes = (movie.dislikes || []).filter(id => id !== user.uid);
+                if (type === 'like') likes.push(user.uid);
+                else dislikes.push(user.uid);
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'movies', movieId), { likes, dislikes });
+            };
+
+            const NavButton = ({ id, icon, label }) => (
+                <button onClick={() => setActiveTab(id)} className={`flex flex-col items-center p-2 ${activeTab.includes(id) ? 'text-indigo-600' : 'text-slate-400'}`}>
+                    <Icon name={icon} />
+                    <span className="text-[10px] font-bold uppercase">{label}</span>
+                </button>
+            );
+
+            return (
+                <div className="max-w-md mx-auto min-h-screen flex flex-col pb-20 font-sans">
+                    <header className="bg-white p-4 border-b flex justify-between items-center sticky top-0 z-10">
+                        <h1 className="text-xl font-black text-indigo-600">MY FAMILY PLANNER</h1>
+                        <span className="text-[10px] text-slate-400">UID: {user?.uid?.slice(0,6)}</span>
+                    </header>
+
+                    <main className="p-4 flex-1">
+                        {activeTab === 'home' && (
+                            <div className="space-y-6 animate-in">
+                                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl p-6 text-white shadow-lg">
+                                    <h2 className="text-2xl font-bold">Family Dashboard 👋</h2>
+                                    <p className="opacity-80">{shoppingItems.filter(i=>!i.completed).length} items to buy.</p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button onClick={()=>setActiveTab('shopping')} className="bg-white p-4 rounded-2xl border flex flex-col items-center gap-2"><Icon name="shopping-basket" className="text-orange-500"/><span className="font-bold">Shopping</span></button>
+                                    <button onClick={()=>setActiveTab('movie-hub')} className="bg-white p-4 rounded-2xl border flex flex-col items-center gap-2"><Icon name="film" className="text-blue-500"/><span className="font-bold">Movies</span></button>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'shopping' && (
+                            <div className="space-y-4 animate-in">
+                                <button onClick={()=>setActiveTab('home')} className="flex items-center gap-1 text-slate-400 mb-2 font-bold"><Icon name="chevron-left" size={16}/> BACK</button>
+                                <form onSubmit={addItem} className="flex gap-2">
+                                    <input value={newItemName} onChange={e=>setNewItemName(e.target.value)} className="flex-1 border p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Add item..."/>
+                                    <button className="bg-indigo-600 text-white p-3 rounded-xl"><Icon name="plus"/></button>
+                                </form>
+                                <div className="bg-white rounded-2xl border divide-y overflow-hidden shadow-sm">
+                                    {shoppingItems.map(item => (
+                                        <div key={item.id} className="flex justify-between p-4">
+                                            <div className="flex gap-3 items-center flex-1" onClick={()=>updateDoc(doc(db,'artifacts',appId,'public','data','shoppingList',item.id), {completed: !item.completed})}>
+                                                <Icon name={item.completed ? 'check-circle-2' : 'circle'} className={item.completed ? 'text-green-500' : 'text-slate-200'}/>
+                                                <span className={item.completed ? 'line-through text-slate-400' : 'text-slate-700 font-medium'}>{item.name}</span>
+                                            </div>
+                                            <button onClick={()=>deleteDoc(doc(db,'artifacts',appId,'public','data','shoppingList',item.id))} className="text-slate-200 hover:text-red-400"><Icon name="trash-2" size={18}/></button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'movie-hub' && (
+                            <div className="space-y-4 animate-in">
+                                <button onClick={()=>setActiveTab('home')} className="flex items-center gap-1 text-slate-400 font-bold"><Icon name="chevron-left" size={16}/> BACK</button>
+                                <h2 className="text-2xl font-bold text-slate-800">Movie Night</h2>
+                                <button onClick={()=>setActiveTab('movie-suggest')} className="w-full bg-white p-6 rounded-2xl border flex justify-between items-center shadow-sm">
+                                    <div className="flex gap-4"><Icon name="plus" className="text-purple-600"/><span className="font-bold text-slate-700 text-lg">Suggest a Movie</span></div>
+                                    <Icon name="chevron-right" className="text-slate-300"/>
+                                </button>
+                                <button onClick={()=>setActiveTab('movie-vote')} className="w-full bg-white p-6 rounded-2xl border flex justify-between items-center shadow-sm">
+                                    <div className="flex gap-4"><Icon name="vote" className="text-rose-600"/><span className="font-bold text-slate-700 text-lg">Vote on a Movie</span></div>
+                                    <Icon name="chevron-right" className="text-slate-300"/>
+                                </button>
+                            </div>
+                        )}
+
+                        {activeTab === 'movie-suggest' && (
+                            <div className="space-y-4 animate-in">
+                                <button onClick={()=>setActiveTab('movie-hub')} className="flex items-center gap-1 text-slate-400 font-bold"><Icon name="chevron-left" size={16}/> BACK</button>
+                                <form onSubmit={suggestMovie} className="flex gap-2">
+                                    <input value={newMovieTitle} onChange={e=>setNewMovieTitle(e.target.value)} className="flex-1 border p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Movie title..."/>
+                                    <button className="bg-purple-600 text-white px-4 rounded-xl font-bold">Add</button>
+                                </form>
+                                <div className="space-y-2">
+                                    <h3 className="font-bold text-slate-400 text-xs uppercase tracking-widest px-1">Ranked Suggestions</h3>
+                                    {rankedMovies.map((m, i) => (
+                                        <div key={m.id} className="bg-white p-4 rounded-2xl border flex justify-between shadow-sm">
+                                            <div className="flex gap-3 font-bold items-center">
+                                                <span className="text-indigo-600 w-4">{i+1}.</span>
+                                                <span className="text-slate-700">{m.title}</span>
+                                            </div>
+                                            <div className="flex gap-3 text-xs font-bold">
+                                                <span className="bg-green-50 text-green-600 px-2 py-1 rounded flex items-center gap-1"><Icon name="thumbs-up" size={12}/> {m.likes?.length || 0}</span>
+                                                <span className="bg-red-50 text-red-600 px-2 py-1 rounded flex items-center gap-1"><Icon name="thumbs-down" size={12}/> {m.dislikes?.length || 0}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'movie-vote' && (
+                            <div className="animate-in flex flex-col h-full">
+                                <button onClick={()=>setActiveTab('movie-hub')} className="flex items-center gap-1 text-slate-400 font-bold mb-8"><Icon name="chevron-left" size={16}/> EXIT VOTING</button>
+                                {(() => {
+                                    const next = movies.find(m => !(m.likes || []).includes(user?.uid) && !(m.dislikes || []).includes(user?.uid));
+                                    return next ? (
+                                        <div className="flex-1 flex flex-col items-center justify-center space-y-8">
+                                            <div className="w-full bg-white aspect-[3/4] rounded-3xl shadow-2xl flex flex-col items-center justify-center p-8 border-2 border-slate-50 relative overflow-hidden">
+                                                <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+                                                <Icon name="film" size={64} className="text-indigo-100 mb-6"/>
+                                                <h3 className="text-3xl font-black text-center text-slate-800">{next.title}</h3>
+                                                <p className="mt-4 text-slate-400 text-xs uppercase tracking-[0.2em] font-bold">Vote to watch</p>
+                                            </div>
+                                            <div className="flex gap-10">
+                                                <button onClick={()=>handleVote(next.id, 'dislike')} className="w-20 h-20 rounded-full bg-white border shadow-xl flex items-center justify-center text-red-500 hover:bg-red-50 active:scale-90 transition-all"><Icon name="thumbs-down" size={32}/></button>
+                                                <button onClick={()=>handleVote(next.id, 'like')} className="w-20 h-20 rounded-full bg-white border shadow-xl flex items-center justify-center text-green-500 hover:bg-green-50 active:scale-90 transition-all"><Icon name="thumbs-up" size={32}/></button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-20 space-y-4">
+                                            <div className="bg-indigo-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto text-indigo-500">
+                                                <Icon name="check-circle-2" size={40}/>
+                                            </div>
+                                            <h3 className="text-xl font-bold text-slate-800">All caught up!</h3>
+                                            <p className="text-slate-500">You have voted on every movie suggestion.</p>
+                                            <button onClick={()=>setActiveTab('movie-suggest')} className="text-indigo-600 font-bold mt-4 underline">Suggest more +</button>
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+                        )}
+                    </main>
+
+                    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t p-2 flex justify-around max-w-md mx-auto rounded-t-[2.5rem] shadow-[0_-5px_20px_rgba(0,0,0,0.05)] z-20">
+                        <NavButton id="home" icon="home" label="Home" />
+                        <NavButton id="shopping" icon="shopping-basket" label="Shop" />
+                        <NavButton id="movie-hub" icon="film" label="Movies" />
+                    </nav>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
